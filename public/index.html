@@ -1,0 +1,837 @@
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020704">
+<title>CYBER CHAT MATRIX</title>
+<style>
+:root {
+  --bg:#020704; --panel:#07130b; --line:#174b27;
+  --green:#39ff78; --text:#d7ffe2; --muted:#77a989;
+}
+* { box-sizing:border-box }
+body {
+  margin:0; min-height:100vh; color:var(--text);
+  background:radial-gradient(ellipse at top,#0b2613,#020704 65%);
+  font-family:Consolas,Monaco,Tahoma,sans-serif;
+}
+button,input,textarea { font:inherit }
+button { cursor:pointer }
+.shell { max-width:1200px; margin:auto; padding:18px }
+header.brand { display:flex; align-items:center; gap:12px; margin-bottom:22px }
+.logo { color:var(--green); font-size:28px; border:1px solid var(--green); padding:6px 12px }
+h1,.green { color:var(--green) }
+h1 { font-size:21px; margin:0 }
+.sub,.muted { color:var(--muted); font-size:11px; margin-top:5px }
+.tag { margin-right:auto; color:var(--green); font-size:11px }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:7px; box-shadow:0 12px 40px #0008 }
+.auth { max-width:430px; margin:35px auto; padding:24px }
+.tabs,.actions,.compose,.search { display:flex; gap:8px }
+.tabs button,.small,.call {
+  background:#030905; border:1px solid var(--line);
+  color:var(--muted); padding:10px; border-radius:4px
+}
+.tabs button { flex:1 }
+.tabs button.active { color:var(--green); border-color:var(--green) }
+label { display:block; margin:14px 0 7px; color:var(--muted); font-size:12px }
+input,textarea {
+  width:100%; min-width:0; background:#020704;
+  color:var(--text); border:1px solid var(--line);
+  padding:12px; border-radius:4px; outline:none
+}
+input:focus,textarea:focus { border-color:var(--green) }
+.primary {
+  background:#0b2c15; color:var(--green);
+  border:1px solid var(--green); border-radius:4px; padding:11px
+}
+.full { width:100%; margin-top:18px }
+.error { color:#ff5978; font-size:12px; margin-top:10px }
+.hint { color:var(--muted); font-size:10px; line-height:1.8; margin-top:14px }
+.app { display:none; grid-template-columns:270px minmax(0,1fr); gap:14px }
+.side { padding:15px; min-width:0 }
+.section-title { color:var(--green); font-size:12px; margin:14px 0 8px }
+.mebox { padding:12px; background:#020704; border:1px solid var(--line); margin:12px 0 }
+.id { color:var(--green); direction:ltr; text-align:right; overflow-wrap:anywhere; margin:6px 0 }
+.search input { flex:1 }
+.search button { flex-shrink:0 }
+.list { display:flex; flex-direction:column; gap:5px; margin:8px 0 16px }
+.list-item {
+  display:flex; align-items:center; gap:8px; width:100%;
+  text-align:right; color:var(--text); background:#030905;
+  border:1px solid #12351d; padding:10px; border-radius:4px
+}
+.list-item.active { border-color:var(--green); background:#0a2111 }
+.dot { width:7px; height:7px; border-radius:50%; background:#45634c; flex-shrink:0 }
+.dot.on { background:var(--green); box-shadow:0 0 8px var(--green) }
+.li-name { flex:1; font-size:12px; overflow-wrap:anywhere }
+.count { color:var(--green); font-size:10px }
+.chat { display:flex; flex-direction:column; min-height:620px; overflow:hidden }
+.chathead { display:flex; align-items:center; gap:10px; padding:14px; border-bottom:1px solid var(--line) }
+.avatar { border:1px solid var(--green); color:var(--green); padding:9px }
+.chatname { color:var(--green); font-size:13px; overflow-wrap:anywhere }
+.chatid { color:var(--muted); font-size:10px; margin-top:5px; direction:ltr; text-align:right }
+.actions { margin-right:auto; flex-wrap:wrap }
+.call { color:var(--green); padding:8px; font-size:11px }
+.messages { flex:1; min-height:300px; max-height:470px; overflow:auto; padding:15px; display:flex; flex-direction:column; gap:10px }
+.empty { color:var(--muted); text-align:center; margin:auto; font-size:12px; line-height:2 }
+.bubble {
+  max-width:85%; align-self:flex-start; background:#0a1b0e;
+  border:1px solid #194d29; padding:10px; border-radius:4px;
+  white-space:pre-wrap; overflow-wrap:anywhere;
+  font:13px/1.5 Tahoma,Arial,sans-serif
+}
+.bubble.mine { align-self:flex-end; background:#0a2512; border-color:#238e43 }
+.sender,.stamp { font:10px Consolas,monospace; color:var(--green); margin-bottom:5px }
+.stamp { color:var(--muted); margin:6px 0 0 }
+.bubble img { max-width:100%; max-height:260px; display:block; margin-top:5px }
+.bubble audio { max-width:100%; width:280px; margin-top:5px }
+.compose { align-items:center; padding:11px; border-top:1px solid var(--line) }
+.compose input[type=text] { flex:1 }
+.compose button:disabled,.compose input:disabled { opacity:.4 }
+.upload { cursor:pointer; border:1px solid var(--line); padding:10px; margin:0; color:var(--green) }
+.upload input { display:none }
+.status,.notice { padding:9px 13px; font-size:10px; color:var(--muted); border-top:1px solid var(--line) }
+.notice { color:var(--green); min-height:28px }
+.modal { display:none; position:fixed; inset:0; z-index:5; background:#000c; align-items:center; justify-content:center; padding:15px }
+.modalbox { width:min(440px,100%); padding:20px }
+.modal-actions { display:flex; gap:8px; margin-top:14px }
+.modal-actions>* { flex:1 }
+#localVideo,#remoteVideo { width:48%; max-height:200px; background:#000; border:1px solid var(--green) }
+.foot { text-align:center; color:#3c6847; font-size:10px; margin:20px }
+@media(max-width:780px) {
+  .shell { padding:11px }
+  .app { grid-template-columns:1fr }
+  .tag { display:none }
+  .side { min-height:auto }
+  .chat { min-height:570px }
+  .messages { max-height:390px }
+  .call { padding:7px; font-size:10px }
+  .actions { gap:4px }
+}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="brand">
+  <div class="logo">⌘</div>
+  <div>
+    <h1>CYBER CHAT</h1>
+    <div class="sub">MATRIX NETWORK // PRIVATE COMMS</div>
+  </div>
+  <div class="tag">● SYSTEM ONLINE</div>
+</header>
+
+<section id="auth" class="panel auth">
+  <div class="tabs">
+    <button id="loginTab" class="active">تسجيل الدخول</button>
+    <button id="registerTab">حساب جديد</button>
+  </div>
+  <form id="authForm">
+    <label>اسم المستخدم</label>
+    <input id="username" required minlength="3" maxlength="24"
+      autocomplete="username" placeholder="matrix_user">
+    <label>كلمة السر</label>
+    <input id="password" required type="password" minlength="8"
+      maxlength="128" autocomplete="current-password" placeholder="8 أحرف على الأقل">
+    <button id="authSubmit" class="primary full">دخول إلى الشبكة ↗</button>
+  </form>
+  <div id="authError" class="error"></div>
+  <div class="hint">لا تشارك كلمة السر. الرسائل محفوظة في قاعدة البيانات، لكن هذا المشروع لا يوفر تشفيراً طرفياً.</div>
+</section>
+
+<section id="app" class="app">
+  <aside class="panel side">
+    <div class="section-title">> USER_TERMINAL</div>
+    <div class="mebox">
+      <div class="muted">الحساب الحالي</div>
+      <div id="myName" class="green"></div>
+      <div class="muted">PUBLIC ID</div>
+      <div id="myId" class="id"></div>
+      <button id="copyId" class="small">نسخ ID</button>
+    </div>
+
+    <div class="section-title">> CONNECT_USER</div>
+    <div class="search">
+      <input id="targetId" placeholder="MX-XXXXXX" dir="ltr">
+      <button id="connectBtn" class="primary">فتح</button>
+    </div>
+    <div id="lookupError" class="error"></div>
+
+    <div class="section-title">> ONLINE_USERS <span id="onlineCount" class="count">0</span></div>
+    <div id="onlineList" class="list"><div class="muted">جاري التحميل...</div></div>
+
+    <div class="section-title">> GROUP_CHANNELS
+      <button id="newGroup" class="small">+ إنشاء</button>
+    </div>
+    <div id="groupList" class="list"><div class="muted">لا توجد مجموعات.</div></div>
+    <button id="logout" class="small" style="width:100%">تسجيل الخروج</button>
+  </aside>
+
+  <section class="panel chat">
+    <header class="chathead">
+      <div class="avatar">⌘</div>
+      <div style="min-width:0">
+        <div id="peerName" class="chatname">اختر محادثة</div>
+        <div id="peerId" class="chatid">ابدأ محادثة خاصة أو افتح مجموعة</div>
+      </div>
+      <div class="actions">
+        <button id="voiceCall" class="call">☎ صوت</button>
+        <button id="videoCall" class="call">▣ فيديو</button>
+        <button id="hangup" class="call" style="display:none">إنهاء</button>
+      </div>
+    </header>
+    <div id="messages" class="messages">
+      <div class="empty">WELCOME TO THE MATRIX<br>اختر مستخدماً لبدء المحادثة.</div>
+    </div>
+    <div id="callNotice" class="notice"></div>
+    <form id="compose" class="compose">
+      <label class="upload" title="إرسال صورة">▧
+        <input id="imageFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" disabled>
+      </label>
+      <button id="recordBtn" type="button" class="call" disabled>● REC</button>
+      <input id="messageInput" type="text" maxlength="4000" placeholder="اكتب رسالة..." disabled>
+      <button id="sendBtn" class="primary" disabled>إرسال</button>
+    </form>
+    <div id="status" class="status">● سجّل الدخول للاتصال</div>
+  </section>
+</section>
+<div class="foot">MATRIX NODE // CYBER CHAT V2</div>
+</main>
+
+<div id="groupModal" class="modal">
+  <div class="panel modalbox">
+    <div class="section-title">> CREATE_GROUP</div>
+    <label>اسم المجموعة</label>
+    <input id="groupName" maxlength="60" placeholder="اسم المجموعة">
+    <label>معرّفات الأعضاء (افصل بينها بفواصل)</label>
+    <textarea id="groupMembers" rows="3" placeholder="MX-123ABC, MX-456DEF"></textarea>
+    <div class="hint">أضف ID واحداً على الأقل غير معرّفك.</div>
+    <div id="groupError" class="error"></div>
+    <div class="modal-actions">
+      <button id="createGroup" class="primary">إنشاء</button>
+      <button id="cancelGroup" class="small">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let mode = "login", token = localStorage.getItem("cc_token");
+let me = null, peer = null, roomId = null, roomKind = null;
+let socket = null, onlineIds = [], allUsers = [];
+let pc = null, localStream = null, remoteAudio = null;
+let recording = null, callPeer = null, callKind = "audio";
+
+async function api(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: "Bearer " + token } : {}),
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw Error(data.error || "حدث خطأ");
+  return data;
+}
+
+function setMode(value) {
+  mode = value;
+  $("loginTab").classList.toggle("active", mode === "login");
+  $("registerTab").classList.toggle("active", mode === "register");
+  $("authSubmit").textContent =
+    mode === "login" ? "دخول إلى الشبكة ↗" : "إنشاء حساب ↗";
+  $("authError").textContent = "";
+}
+
+$("loginTab").onclick = () => setMode("login");
+$("registerTab").onclick = () => setMode("register");
+
+$("authForm").onsubmit = async event => {
+  event.preventDefault();
+  $("authError").textContent = "";
+  try {
+    const result = await api("/api/" + mode, {
+      method: "POST",
+      body: JSON.stringify({
+        username: $("username").value,
+        password: $("password").value
+      })
+    });
+    token = result.token;
+    localStorage.setItem("cc_token", token);
+    me = result.user;
+    showApp();
+  } catch (error) {
+    $("authError").textContent = error.message;
+  }
+};
+
+function showApp() {
+  $("auth").style.display = "none";
+  $("app").style.display = "grid";
+  $("myName").textContent = "@" + me.username;
+  $("myId").textContent = me.publicId;
+  connectSocket();
+  loadUsers();
+  loadGroups();
+}
+
+function connectSocket() {
+  if (socket) socket.disconnect();
+  socket = io({ auth: { token } });
+
+  socket.on("connect", () => {
+    $("status").textContent = "● متصل بالشبكة";
+  });
+  socket.on("disconnect", () => {
+    $("status").textContent = "○ انقطع الاتصال";
+  });
+  socket.on("connect_error", () => {
+    $("status").textContent = "○ تعذر الاتصال";
+  });
+  socket.on("presence-list", ids => {
+    onlineIds = ids;
+    renderUsers();
+  });
+  socket.on("private-message", message => {
+    if (message.roomId === roomId) appendMessage(message);
+  });
+  socket.on("chat-error", message => {
+    $("lookupError").textContent = message;
+  });
+  socket.on("call-signal", handleSignal);
+}
+
+async function loadUsers() {
+  try {
+    const result = await api("/api/users");
+    allUsers = result.users;
+    renderUsers();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function renderUsers() {
+  const list = $("onlineList");
+  list.replaceChildren();
+  const users = allUsers.filter(user => onlineIds.includes(user.publicId));
+  $("onlineCount").textContent = users.length;
+
+  if (!users.length) {
+    list.textContent = "لا يوجد مستخدمون متصلون حالياً.";
+    list.className = "list muted";
+    return;
+  }
+
+  list.className = "list";
+  users.forEach(user => {
+    const button = document.createElement("button");
+    button.className = "list-item";
+    if (roomKind === "dm" && peer?.publicId === user.publicId) {
+      button.classList.add("active");
+    }
+
+    const dot = document.createElement("span");
+    dot.className = "dot on";
+    const name = document.createElement("span");
+    name.className = "li-name";
+    name.textContent = "@" + user.username;
+
+    button.append(dot, name);
+    button.onclick = () => openDirect(user.publicId);
+    list.append(button);
+  });
+}
+
+async function loadGroups() {
+  try {
+    const result = await api("/api/groups");
+    const list = $("groupList");
+    list.replaceChildren();
+
+    if (!result.groups.length) {
+      list.textContent = "لا توجد مجموعات بعد.";
+      list.className = "list muted";
+      return;
+    }
+
+    list.className = "list";
+    result.groups.forEach(group => {
+      const button = document.createElement("button");
+      button.className = "list-item";
+      button.classList.toggle("active", roomId === group.groupId);
+      const dot = document.createElement("span");
+      dot.className = "dot on";
+      const name = document.createElement("span");
+      name.className = "li-name";
+      name.textContent = "# " + group.name;
+      const count = document.createElement("span");
+      count.className = "count";
+      count.textContent = group.members.length;
+      button.append(dot, name, count);
+      button.onclick = () => openGroup(group);
+      list.append(button);
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function directRoom(a, b) {
+  return "dm:" + [a, b].sort().join(":");
+}
+
+async function openDirect(id) {
+  $("lookupError").textContent = "";
+  try {
+    const result = await api("/api/users/" + encodeURIComponent(id));
+    if (result.user.publicId === me.publicId) {
+      throw Error("هذا معرّف حسابك.");
+    }
+
+    peer = result.user;
+    roomKind = "dm";
+    roomId = directRoom(me.publicId, peer.publicId);
+    setChat("@" + peer.username, peer.publicId);
+    socket.emit("join-room", { roomId });
+    await loadHistory();
+    $("targetId").value = peer.publicId;
+    renderUsers();
+  } catch (error) {
+    $("lookupError").textContent = error.message;
+  }
+}
+
+async function openGroup(group) {
+  peer = null;
+  roomKind = "group";
+  roomId = group.groupId;
+  setChat("# " + group.name, group.groupId);
+  socket.emit("join-room", { roomId });
+  await loadHistory();
+  loadGroups();
+}
+
+function setChat(name, id) {
+  $("peerName").textContent = name;
+  $("peerId").textContent = id;
+  $("messageInput").disabled = false;
+  $("sendBtn").disabled = false;
+  $("imageFile").disabled = false;
+  $("recordBtn").disabled = false;
+  $("messages").replaceChildren();
+}
+
+async function loadHistory() {
+  $("messages").replaceChildren();
+  try {
+    const result = await api("/api/messages/" + encodeURIComponent(roomId));
+    if (!result.messages.length) {
+      showEmpty("محادثة جديدة. أرسل أول رسالة.");
+    } else {
+      result.messages.forEach(appendMessage);
+    }
+  } catch (error) {
+    showEmpty(error.message);
+  }
+}
+
+function showEmpty(text) {
+  const div = document.createElement("div");
+  div.className = "empty";
+  div.textContent = text;
+  $("messages").append(div);
+}
+
+$("connectBtn").onclick = () => openDirect($("targetId").value.trim());
+$("targetId").onkeydown = event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    openDirect($("targetId").value.trim());
+  }
+};
+
+$("compose").onsubmit = event => {
+  event.preventDefault();
+  const text = $("messageInput").value.trim();
+  if (!text || !roomId) return;
+
+  if (roomKind === "group") {
+    socket.emit("group-message", { roomId, text });
+  } else {
+    socket.emit("private-message", { to: peer.publicId, text });
+  }
+  $("messageInput").value = "";
+};
+
+function appendMessage(message) {
+  if (message.roomId !== roomId) return;
+  const empty = $("messages").querySelector(".empty");
+  if (empty) empty.remove();
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  if (message.from === me.publicId) bubble.classList.add("mine");
+
+  if (roomKind === "group") {
+    const sender = document.createElement("div");
+    sender.className = "sender";
+    sender.textContent = message.fromName || message.from;
+    bubble.append(sender);
+  }
+
+  if (message.text) {
+    const text = document.createElement("div");
+    text.textContent = message.text;
+    bubble.append(text);
+  }
+
+  if (message.media?.data) {
+    if (message.media.kind === "image") {
+      const img = document.createElement("img");
+      img.src = message.media.data;
+      img.alt = message.media.name || "صورة";
+      img.loading = "lazy";
+      bubble.append(img);
+    } else if (message.media.kind === "audio") {
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = message.media.data;
+      bubble.append(audio);
+    }
+  }
+
+  const stamp = document.createElement("div");
+  stamp.className = "stamp";
+  stamp.textContent =
+    (message.from === me.publicId ? "أنت" : message.fromName || message.from) +
+    " · " + new Date(message.createdAt).toLocaleTimeString([], {
+      hour: "2-digit", minute: "2-digit"
+    });
+
+  bubble.append(stamp);
+  $("messages").append(bubble);
+  $("messages").scrollTop = $("messages").scrollHeight;
+}
+
+function toDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// إرسال الصور
+$("imageFile").onchange = async event => {
+  const file = event.target.files[0];
+  event.target.value = "";
+  if (!file || !roomId) return;
+
+  if (file.size > 3_000_000) {
+    $("callNotice").textContent = "حجم الصورة يجب أن يكون أقل من 3MB.";
+    return;
+  }
+
+  try {
+    const data = await toDataUrl(file);
+    socket.emit("media-message", {
+      roomId,
+      kind: "image",
+      data,
+      mime: file.type,
+      name: file.name
+    });
+    $("callNotice").textContent = "تم إرسال الصورة للحفظ.";
+  } catch {
+    $("callNotice").textContent = "تعذر قراءة الصورة.";
+  }
+};
+
+// تسجيل وإرسال الرسائل الصوتية
+$("recordBtn").onclick = async () => {
+  if (recording) {
+    recording.stop();
+    return;
+  }
+
+  if (!roomId) return;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const chunks = [];
+    recording = new MediaRecorder(stream);
+
+    recording.ondataavailable = event => {
+      if (event.data.size) chunks.push(event.data);
+    };
+
+    recording.onstop = async () => {
+      const recorder = recording;
+      recording = null;
+      stream.getTracks().forEach(track => track.stop());
+      $("recordBtn").textContent = "● REC";
+
+      const blob = new Blob(chunks, {
+        type: recorder.mimeType || "audio/webm"
+      });
+
+      if (blob.size > 3_000_000) {
+        $("callNotice").textContent = "التسجيل طويل جداً؛ جرّب تسجيلاً أقصر.";
+        return;
+      }
+
+      const file = new File([blob], "voice.webm", { type: blob.type });
+      const data = await toDataUrl(file);
+      socket.emit("media-message", {
+        roomId,
+        kind: "audio",
+        data,
+        mime: blob.type,
+        name: file.name
+      });
+      $("callNotice").textContent = "تم إرسال التسجيل الصوتي.";
+    };
+
+    recording.start();
+    $("recordBtn").textContent = "■ إيقاف";
+    $("callNotice").textContent = "التسجيل يعمل...";
+  } catch {
+    $("callNotice").textContent = "اسمح للمتصفح باستخدام الميكروفون.";
+  }
+};
+
+// إنشاء المجموعات
+$("newGroup").onclick = () => {
+  $("groupModal").style.display = "flex";
+  $("groupError").textContent = "";
+};
+$("cancelGroup").onclick = () => {
+  $("groupModal").style.display = "none";
+};
+
+$("createGroup").onclick = async () => {
+  try {
+    const members = $("groupMembers").value
+      .split(/[,\s]+/).map(x => x.trim()).filter(Boolean);
+
+    const result = await api("/api/groups", {
+      method: "POST",
+      body: JSON.stringify({
+        name: $("groupName").value,
+        members
+      })
+    });
+
+    $("groupModal").style.display = "none";
+    $("groupName").value = "";
+    $("groupMembers").value = "";
+    await loadGroups();
+    await openGroup(result.group);
+  } catch (error) {
+    $("groupError").textContent = error.message;
+  }
+};
+
+$("copyId").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(me.publicId);
+    $("copyId").textContent = "تم النسخ ✓";
+  } catch {
+    $("copyId").textContent = me.publicId;
+  }
+};
+
+$("logout").onclick = () => {
+  cleanupCall();
+  if (socket) socket.disconnect();
+  localStorage.removeItem("cc_token");
+  location.reload();
+};
+
+// مكالمات WebRTC الفردية
+function sendSignal(data, to = callPeer) {
+  if (socket && roomId && to) {
+    socket.emit("call-signal", { to, roomId, data });
+  }
+}
+
+async function createPeerConnection(kind) {
+  pc = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  });
+
+  pc.onicecandidate = event => {
+    if (event.candidate) {
+      sendSignal({ type: "candidate", candidate: event.candidate });
+    }
+  };
+
+  pc.ontrack = event => {
+    const stream = event.streams[0];
+
+    if (stream.getVideoTracks().length) {
+      let video = document.getElementById("remoteVideo");
+      if (!video) {
+        video = document.createElement("video");
+        video.id = "remoteVideo";
+        video.autoplay = true;
+        video.playsInline = true;
+        $("messages").prepend(video);
+      }
+      video.srcObject = stream;
+    } else {
+      if (!remoteAudio) {
+        remoteAudio = new Audio();
+        remoteAudio.autoplay = true;
+      }
+      remoteAudio.srcObject = stream;
+    }
+  };
+
+  localStream = await navigator.mediaDevices.getUserMedia({
+    audio: true,
+    video: kind === "video"
+  });
+
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  if (kind === "video") {
+    const video = document.createElement("video");
+    video.id = "localVideo";
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.srcObject = localStream;
+    $("messages").prepend(video);
+  }
+
+  $("hangup").style.display = "inline-block";
+}
+
+async function startCall(kind) {
+  if (roomKind !== "dm" || !peer) {
+    $("callNotice").textContent = "افتح محادثة خاصة مع شخص لمكالمته.";
+    return;
+  }
+
+  if (!socket?.connected) {
+    $("callNotice").textContent = "الاتصال بالشبكة غير متاح.";
+    return;
+  }
+
+  callPeer = peer.publicId;
+  callKind = kind;
+
+  try {
+    await createPeerConnection(kind);
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    sendSignal({ type: "offer", sdp: offer, kind });
+    $("callNotice").textContent = "طلب المكالمة أُرسل؛ انتظر الرد.";
+  } catch (error) {
+    $("callNotice").textContent = "تعذر بدء المكالمة. تحقق من HTTPS والأذونات.";
+    cleanupCall();
+  }
+}
+
+$("voiceCall").onclick = () => startCall("audio");
+$("videoCall").onclick = () => startCall("video");
+
+async function handleSignal(message) {
+  const data = message.data || {};
+
+  if (data.type === "offer") {
+    const accept = confirm(
+      "المستخدم " + message.fromName + " يتصل بك. هل تريد الرد؟"
+    );
+
+    if (!accept) {
+      socket.emit("call-signal", {
+        to: message.from,
+        roomId: message.roomId,
+        data: { type: "decline" }
+      });
+      return;
+    }
+
+    // الرد يُرسل إلى صاحب المكالمة حتى لو لم تكن محادثته مفتوحة.
+    roomId = message.roomId;
+    callPeer = message.from;
+    callKind = data.kind || "audio";
+
+    try {
+      await createPeerConnection(callKind);
+      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      sendSignal({ type: "answer", sdp: answer });
+      $("callNotice").textContent = "المكالمة نشطة.";
+    } catch {
+      $("callNotice").textContent = "تعذر قبول المكالمة.";
+      cleanupCall();
+    }
+  } else if (data.type === "answer" && pc) {
+    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    $("callNotice").textContent = "المكالمة نشطة.";
+  } else if (data.type === "candidate" && pc) {
+    try {
+      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    } catch {}
+  } else if (data.type === "decline") {
+    $("callNotice").textContent = "تم رفض المكالمة.";
+    cleanupCall();
+  } else if (data.type === "hangup") {
+    $("callNotice").textContent = "انتهت المكالمة.";
+    cleanupCall();
+  }
+}
+
+function cleanupCall() {
+  if (pc) {
+    pc.close();
+    pc = null;
+  }
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+  if (remoteAudio) {
+    remoteAudio.srcObject = null;
+    remoteAudio = null;
+  }
+  ["localVideo", "remoteVideo"].forEach(id => {
+    document.getElementById(id)?.remove();
+  });
+  $("hangup").style.display = "none";
+}
+
+$("hangup").onclick = () => {
+  sendSignal({ type: "hangup" });
+  cleanupCall();
+  $("callNotice").textContent = "أنهيت المكالمة.";
+};
+
+// استعادة الجلسة
+(async () => {
+  if (!token) return;
+
+  try {
+    const result = await api("/api/me");
+    me = result.user;
+    showApp();
+  } catch {
+    localStorage.removeItem("cc_token");
+    token = null;
+  }
+})();
+</script>
+</body>
+</html>
